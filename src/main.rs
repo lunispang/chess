@@ -46,7 +46,7 @@ impl Piece {
         let ch = match self.piece {
             PieceType::Pawn => 'p',
             PieceType::Bishop => 'b',
-            PieceType::Knight => 'k',
+            PieceType::Knight => 'n',
             PieceType::Rook => 'r',
             PieceType::Queen => 'q',
             PieceType::King => 'k',
@@ -56,6 +56,24 @@ impl Piece {
             Color::Black => ch,
         } 
     }
+    fn from_char(ch: char) -> Option<Self> {
+        let color = match ch.is_uppercase() {
+            true => Color::White,
+            false => Color::Black,
+        };
+
+        let piece = match ch.to_ascii_lowercase() {
+            'p' => PieceType::Pawn,
+            'b' => PieceType::Bishop,
+            'n' => PieceType::Knight,
+            'r' => PieceType::Rook,
+            'q' => PieceType::Queen,
+            'k' => PieceType::King,
+            _ => {return None;}
+        };
+
+        Some(Piece {piece, color, pos: BoardPos::from_idx(0).unwrap()})
+    }
 }
 
 const NONE_PIECE: Option<Piece> = None;
@@ -63,6 +81,10 @@ const NONE_PIECE: Option<Piece> = None;
 struct ChessBoard {
     pieces: [Option<Piece>; 64],
     turn: Color,
+}
+
+fn row_to_display(row: u8) -> u8 {
+    8 - row
 }
 
 impl ChessBoard {
@@ -77,7 +99,7 @@ impl ChessBoard {
             pieces.push(Piece {color: Color::Black, piece: PieceType::Pawn, pos: BoardPos {row: 1, col}});
         }
 
-        for (col, &piece) in vec![PieceType::Rook, PieceType::Knight, PieceType::Bishop, PieceType::Queen, PieceType::King, PieceType::Bishop, PieceType::Knight, PieceType::Rook].iter().enumerate() {
+        for (col, piece) in "rnbqkbnr".chars().map(|c| Piece::from_char(c).unwrap().piece).enumerate() {
             let col = col.try_into().unwrap();
             //add white pawns
             pieces.push(Piece {color: Color::White, piece, pos: BoardPos {row: 7, col}});
@@ -91,13 +113,18 @@ impl ChessBoard {
         return board;
     }
     fn print(&self) {
+        println!("   a  b  c  d  e  f  g  h");
         for (idx, piece) in self.pieces.iter().enumerate() {
             let pos = BoardPos::from_idx(idx).unwrap();
+            if pos.col == 0 {
+                print!("{} ", row_to_display(pos.row));
+            }
             print!("[{}]", match piece {Some(p) => p.to_char(), None => ' '});
             if pos.col == 7 {
-                print!("\n");
+                print!(" {}\n", row_to_display(pos.row));
             }
         }
+        println!("   a  b  c  d  e  f  g  h");
     }
 }
 
