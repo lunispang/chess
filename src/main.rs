@@ -8,7 +8,7 @@ enum PieceType {
     King,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Color {
     White,
     Black,
@@ -31,6 +31,26 @@ impl BoardPos {
             row: (idx / 8).try_into().unwrap(),
             col: (idx % 8).try_into().unwrap()
         })
+    }
+
+    fn parse(string: &str) -> Option<BoardPos> {
+        if string.len() == 2 {
+            let col: u8 = string.chars().nth(0).unwrap() as u8;
+            let row: u8 = string.chars().nth(1).unwrap() as u8;
+            println!("{col}, {row}");
+
+            return match (col, row) {
+                (b'a'..=b'h', b'1'..=b'8') => Some({
+                    BoardPos {row: b'8' - row, col: col - b'a'}
+                }),
+                _ => {
+                    println!("invalid position, string: {:#?}", string);
+                    None
+                }
+            }
+        }
+        println!("invalid length, string: {:#?}", string);
+        None
     }
 }
 
@@ -78,19 +98,45 @@ impl Piece {
 
 const NONE_PIECE: Option<Piece> = None;
 
+#[derive(Debug, Clone)]
 struct ChessBoard {
     pieces: [Option<Piece>; 64],
     turn: Color,
+    winner: Option<Color>,
 }
 
 fn row_to_display(row: u8) -> u8 {
     8 - row
 }
 
+struct Move {
+    from: BoardPos,
+    to: BoardPos,
+}
+
+impl Move {
+    fn parse(string: &str) -> Option<Self> {
+        if string.len() == 4 {
+            let from = BoardPos::parse(&string[0..2]);
+            println!("from: {:#?}", from);
+            let to = BoardPos::parse(&string[2..4]);
+            println!("to: {:#?}", to);
+            if from.is_some() && to.is_some() {
+                let (from, to) = (from.unwrap(), to.unwrap());
+                return Some(Move { from, to });
+            }
+            println!("invalid boardpos parses");
+            return None;
+        } 
+        println!("string was not length 4, string: {:#?}", string);
+        None
+    }
+}
+
 impl ChessBoard {
     fn new() -> Self {
         let mut pieces: Vec<Piece> = Vec::new();
-        let mut board: ChessBoard = ChessBoard {pieces: [NONE_PIECE; 64], turn: Color::White};
+        let mut board: ChessBoard = ChessBoard {pieces: [NONE_PIECE; 64], turn: Color::White, winner: None};
         //add pawns
         for col in 0..8 {
             //add white pawns
@@ -112,7 +158,9 @@ impl ChessBoard {
         }
         return board;
     }
+
     fn print(&self) {
+        println!("{}'s turn", match self.turn { Color::White => "White", Color::Black => "Black" });
         println!("   a  b  c  d  e  f  g  h");
         for (idx, piece) in self.pieces.iter().enumerate() {
             let pos = BoardPos::from_idx(idx).unwrap();
@@ -126,9 +174,43 @@ impl ChessBoard {
         }
         println!("   a  b  c  d  e  f  g  h");
     }
+
+    fn valid_moves(&self) -> Vec<Move> {
+        let _pieces: Vec<Piece> = self.pieces.iter().filter(|p| p.is_some() && p.unwrap().color == self.turn).map(|p| p.unwrap()).collect();
+        todo!();
+    }
+
+    fn execute(&mut self, mve: &Move) {
+        let from_idx = mve.from.to_idx();
+        let from_piece = self.pieces[from_idx];
+        let to_idx = mve.to.to_idx();
+        if from_piece.is_some() && from_piece.unwrap().color == self.turn {
+            self.pieces[to_idx] = from_piece;
+            self.pieces[from_idx] = None;
+            self.turn = match self.turn {
+                Color::White => Color::Black,
+                Color::Black => Color::White
+            };
+        } else {
+            println!("move not valid");
+        }
+    }
 }
 
+
+
 fn main() {
-    let board = ChessBoard::new(); 
-    board.print();
+    let mut board = ChessBoard::new(); 
+    let mut input = String::new();
+    while board.winner.is_none() {
+        board.print();
+        input.clear();
+        std::io::stdin().read_line(&mut input).unwrap();
+        input = input.as_str().trim().to_string();
+        let player_move: Move = match Move::parse(&input) {
+            Some(m) => m,
+            None => { println!("invalid move"); continue; }
+        };
+        board.execute(&player_move);
+    }
 }
