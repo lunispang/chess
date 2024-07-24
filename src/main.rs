@@ -37,19 +37,14 @@ impl BoardPos {
         if string.len() == 2 {
             let col: u8 = string.chars().nth(0).unwrap() as u8;
             let row: u8 = string.chars().nth(1).unwrap() as u8;
-            println!("{col}, {row}");
 
             return match (col, row) {
                 (b'a'..=b'h', b'1'..=b'8') => Some({
                     BoardPos {row: b'8' - row, col: col - b'a'}
                 }),
-                _ => {
-                    println!("invalid position, string: {:#?}", string);
-                    None
-                }
+                _ => None
             }
         }
-        println!("invalid length, string: {:#?}", string);
         None
     }
 }
@@ -125,10 +120,8 @@ impl Move {
                 let (from, to) = (from.unwrap(), to.unwrap());
                 return Some(Move { from, to });
             }
-            println!("invalid boardpos parses");
-            return None;
+            None
         } 
-        println!("string was not length 4, string: {:#?}", string);
         None
     }
 }
@@ -192,7 +185,7 @@ impl ChessBoard {
                 Color::Black => Color::White
             };
         } else {
-            println!("move not valid");
+            println!("move not valid, wrong color piece (or no piece)");
         }
     }
 }
