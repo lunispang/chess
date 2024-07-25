@@ -120,7 +120,7 @@ impl Move {
                 let (from, to) = (from.unwrap(), to.unwrap());
                 return Some(Move { from, to });
             }
-            None
+            return None;
         } 
         None
     }
