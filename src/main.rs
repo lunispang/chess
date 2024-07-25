@@ -14,7 +14,7 @@ enum Color {
     Black,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 struct BoardPos {
     row: u8,
     col: u8,
@@ -90,8 +90,9 @@ impl Piece {
 
         Some(Piece {piece, color, pos: BoardPos::from_idx(0).unwrap()})
     }
-    
+
     fn is_move_valid(&self, mve: &Move, board: &ChessBoard) -> bool {
+        println!("move: {:#?}", mve);
         match self.piece {
             PieceType::Pawn => {
                 mve.from.col == mve.to.col // temporary, will fix later
@@ -100,23 +101,25 @@ impl Piece {
                 match (mve.from.row == mve.to.row, mve.from.col == mve.to.col) {
                     (false, false) => false,
                     (true, false) => {
-                        let start: usize = (mve.from.row + std::cmp::min(mve.from.col, mve.to.col)).into();
-                        let end: usize = (mve.from.row + std::cmp::max(mve.from.col, mve.to.col)).into();
+                        let start: usize = (8 * mve.from.row + std::cmp::min(mve.from.col, mve.to.col)).into();
+                        let end: usize = (8 * mve.from.row + std::cmp::max(mve.from.col, mve.to.col) - 1).into();
+                        println!("start:{start}, end:{end}");
                         board.pieces.iter()
-                        .skip(start)
-                        .take(end - start)
-                        .all(|e| e.is_none())
+                            .skip(start + 1)
+                            .take(end - start)
+                            .all(|e| {println!("{:#?}", e); e.is_none()})
                     }
                     (false, true) => {
-                        let start: usize = (mve.from.row + std::cmp::min(mve.from.col, mve.to.col)).into();
-                        let end: usize = (mve.from.row + std::cmp::max(mve.from.col, mve.to.col)).into();
+                        let start: usize = (8 * std::cmp::min(mve.from.row, mve.to.row) + mve.from.col).into();
+                        let end: usize = (8 * std::cmp::max(mve.from.row, mve.to.row) + mve.from.col - 8).into();
+                        println!("start:{start}, end:{end}");
                         board.pieces.iter()
-                        .skip(start)
-                        .step_by(8)
-                        .take(end - start)
-                        .all(|e| e.is_none())
+                            .skip(start + 8)
+                            .take(end - start)
+                            .step_by(8)
+                            .all(|e| {println!("{:#?}", e); e.is_none()})
                     }
-                    (true, true) => false, // this means the rook didnt move, should never happen
+                    (true, true) => panic!("something went wrong"), // this means the rook didnt move/captured itself, (wrong)
                 }
             }
             _ => panic!("not implemented yet")
@@ -126,7 +129,7 @@ impl Piece {
 
 const NONE_PIECE: Option<Piece> = None;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 struct ChessBoard {
     pieces: [Option<Piece>; 64],
     turn: Color,
@@ -137,6 +140,7 @@ fn row_to_display(row: u8) -> u8 {
     8 - row
 }
 
+#[derive(Debug, PartialEq)]
 struct Move {
     from: BoardPos,
     to: BoardPos,
@@ -155,15 +159,15 @@ impl Move {
         } 
         None
     }
-    fn is_valid(mve: &Move, board: &ChessBoard) -> bool {
-        if board.pieces[mve.from.to_idx()].is_none() || board.pieces[mve.from.to_idx()].unwrap().color != board.turn {
+    fn is_valid(&self, board: &ChessBoard) -> bool {
+        if board.pieces[self.from.to_idx()].is_none() || board.pieces[self.from.to_idx()].unwrap().color != board.turn {
             return false;
         }
-        if board.pieces[mve.to.to_idx()].is_some() && board.pieces[mve.to.to_idx()].unwrap().color == board.turn {
+        if board.pieces[self.to.to_idx()].is_some() && board.pieces[self.to.to_idx()].unwrap().color == board.turn {
             return false;
         }
-        let piece = board.pieces[mve.from.to_idx()].unwrap();
-        piece.is_move_valid(mve, board)
+        let piece = board.pieces[self.from.to_idx()].unwrap();
+        piece.is_move_valid(self, board)
     }
 }
 
@@ -209,29 +213,24 @@ impl ChessBoard {
         println!("   a  b  c  d  e  f  g  h");
     }
 
-    fn valid_moves(&self) -> Vec<Move> {
-        let _pieces: Vec<Piece> = self.pieces.iter().filter(|p| p.is_some() && p.unwrap().color == self.turn).map(|p| p.unwrap()).collect();
-        todo!();
-    }
-
-    fn execute(&mut self, mve: &Move) {
+    fn execute(&mut self, mve: &Move) -> bool {
         let from_idx = mve.from.to_idx();
         let from_piece = self.pieces[from_idx];
         let to_idx = mve.to.to_idx();
-        if from_piece.is_some() && from_piece.unwrap().is_move_valid(mve, self) {
+        if from_piece.is_some() && mve.is_valid(self) {
             self.pieces[to_idx] = from_piece;
             self.pieces[from_idx] = None;
             self.turn = match self.turn {
                 Color::White => Color::Black,
                 Color::Black => Color::White
             };
+            true
         } else {
             println!("move not valid, wrong color piece (or no piece)");
+            false
         }
     }
 }
-
-
 
 fn main() {
     let mut board = ChessBoard::new(); 
@@ -243,8 +242,12 @@ fn main() {
         input = input.as_str().trim().to_string();
         let player_move: Move = match Move::parse(&input) {
             Some(m) => m,
-            None => { println!("invalid move"); continue; }
+            None => { println!("invalid move format. example: e2e4"); continue; }
         };
-        board.execute(&player_move);
+        let result = board.execute(&player_move);
+        if !result {
+            println!("move is invalid. please read chess rules first, or make sure the positions are correct");
+            println!("right now maybe its actually valid, most pieces are unimplemented as of right now");
+        }
     }
 }
