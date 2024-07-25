@@ -21,13 +21,13 @@ struct BoardPos {
 }
 
 impl BoardPos {
-    fn to_idx(&self) -> usize {
-        return (self.col + self.row * 8).into()
+    fn to_idx(self) -> usize {
+        (self.col + self.row * 8).into()
     }
 
     fn from_idx(idx: usize) -> Option<Self> {
         if idx >= 64 { return None }
-        return Some(BoardPos {
+        Some(BoardPos {
             row: (idx / 8).try_into().unwrap(),
             col: (idx % 8).try_into().unwrap()
         })
@@ -57,7 +57,7 @@ struct Piece {
 }
 
 impl Piece {
-    fn to_char(&self) -> char {
+    fn to_char(self) -> char {
         let ch = match self.piece {
             PieceType::Pawn => 'p',
             PieceType::Bishop => 'b',
@@ -105,7 +105,7 @@ impl Piece {
                         board.pieces.iter()
                         .skip(start)
                         .take(end - start)
-                        .fold(true, |acc, e| acc && e.is_none())
+                        .all(|e| e.is_none())
                     }
                     (false, true) => {
                         let start: usize = (mve.from.row + std::cmp::min(mve.from.col, mve.to.col)).into();
@@ -114,7 +114,7 @@ impl Piece {
                         .skip(start)
                         .step_by(8)
                         .take(end - start)
-                        .fold(true, |acc, e| acc && e.is_none())
+                        .all(|e| e.is_none())
                     }
                     (true, true) => false, // this means the rook didnt move, should never happen
                 }
@@ -163,7 +163,7 @@ impl Move {
             return false;
         }
         let piece = board.pieces[mve.from.to_idx()].unwrap();
-        return piece.is_move_valid(&mve, board);
+        piece.is_move_valid(mve, board)
     }
 }
 
@@ -190,7 +190,7 @@ impl ChessBoard {
         for piece in pieces {
             board.pieces[piece.pos.to_idx()] = Some(piece);
         }
-        return board;
+        board
     }
 
     fn print(&self) {
@@ -203,7 +203,7 @@ impl ChessBoard {
             }
             print!("[{}]", match piece {Some(p) => p.to_char(), None => ' '});
             if pos.col == 7 {
-                print!(" {}\n", row_to_display(pos.row));
+                println!(" {}", row_to_display(pos.row));
             }
         }
         println!("   a  b  c  d  e  f  g  h");
@@ -218,7 +218,7 @@ impl ChessBoard {
         let from_idx = mve.from.to_idx();
         let from_piece = self.pieces[from_idx];
         let to_idx = mve.to.to_idx();
-        if from_piece.is_some() && from_piece.unwrap().is_move_valid(mve, &self) {
+        if from_piece.is_some() && from_piece.unwrap().is_move_valid(mve, self) {
             self.pieces[to_idx] = from_piece;
             self.pieces[from_idx] = None;
             self.turn = match self.turn {
