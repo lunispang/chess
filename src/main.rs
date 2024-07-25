@@ -71,6 +71,7 @@ impl Piece {
             Color::Black => ch,
         } 
     }
+
     fn from_char(ch: char) -> Option<Self> {
         let color = match ch.is_uppercase() {
             true => Color::White,
@@ -88,6 +89,38 @@ impl Piece {
         };
 
         Some(Piece {piece, color, pos: BoardPos::from_idx(0).unwrap()})
+    }
+    
+    fn is_move_valid(&self, mve: &Move, board: &ChessBoard) -> bool {
+        match self.piece {
+            PieceType::Pawn => {
+                mve.from.col == mve.to.col // temporary, will fix later
+            },
+            PieceType::Rook => {
+                match (mve.from.row == mve.to.row, mve.from.col == mve.to.col) {
+                    (false, false) => false,
+                    (true, false) => {
+                        let start: usize = (mve.from.row + std::cmp::min(mve.from.col, mve.to.col)).into();
+                        let end: usize = (mve.from.row + std::cmp::max(mve.from.col, mve.to.col)).into();
+                        board.pieces.iter()
+                        .skip(start)
+                        .take(end - start)
+                        .fold(true, |acc, e| acc && e.is_none())
+                    }
+                    (false, true) => {
+                        let start: usize = (mve.from.row + std::cmp::min(mve.from.col, mve.to.col)).into();
+                        let end: usize = (mve.from.row + std::cmp::max(mve.from.col, mve.to.col)).into();
+                        board.pieces.iter()
+                        .skip(start)
+                        .step_by(8)
+                        .take(end - start)
+                        .fold(true, |acc, e| acc && e.is_none())
+                    }
+                    (true, true) => false, // this means the rook didnt move, should never happen
+                }
+            }
+            _ => panic!("not implemented yet")
+        }
     }
 }
 
@@ -113,9 +146,7 @@ impl Move {
     fn parse(string: &str) -> Option<Self> {
         if string.len() == 4 {
             let from = BoardPos::parse(&string[0..2]);
-            println!("from: {:#?}", from);
             let to = BoardPos::parse(&string[2..4]);
-            println!("to: {:#?}", to);
             if from.is_some() && to.is_some() {
                 let (from, to) = (from.unwrap(), to.unwrap());
                 return Some(Move { from, to });
@@ -123,6 +154,16 @@ impl Move {
             return None;
         } 
         None
+    }
+    fn is_valid(mve: &Move, board: &ChessBoard) -> bool {
+        if board.pieces[mve.from.to_idx()].is_none() || board.pieces[mve.from.to_idx()].unwrap().color != board.turn {
+            return false;
+        }
+        if board.pieces[mve.to.to_idx()].is_some() && board.pieces[mve.to.to_idx()].unwrap().color == board.turn {
+            return false;
+        }
+        let piece = board.pieces[mve.from.to_idx()].unwrap();
+        return piece.is_move_valid(&mve, board);
     }
 }
 
@@ -177,7 +218,7 @@ impl ChessBoard {
         let from_idx = mve.from.to_idx();
         let from_piece = self.pieces[from_idx];
         let to_idx = mve.to.to_idx();
-        if from_piece.is_some() && from_piece.unwrap().color == self.turn {
+        if from_piece.is_some() && from_piece.unwrap().is_move_valid(mve, &self) {
             self.pieces[to_idx] = from_piece;
             self.pieces[from_idx] = None;
             self.turn = match self.turn {
