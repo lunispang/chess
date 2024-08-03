@@ -26,10 +26,12 @@ impl BoardPos {
     }
 
     fn from_idx(idx: usize) -> Option<Self> {
-        if idx >= 64 { return None }
+        if idx >= 64 {
+            return None;
+        }
         Some(BoardPos {
             row: (idx / 8).try_into().unwrap(),
-            col: (idx % 8).try_into().unwrap()
+            col: (idx % 8).try_into().unwrap(),
         })
     }
 
@@ -40,10 +42,13 @@ impl BoardPos {
 
             return match (col, row) {
                 (b'a'..=b'h', b'1'..=b'8') => Some({
-                    BoardPos {row: b'8' - row, col: col - b'a'}
+                    BoardPos {
+                        row: b'8' - row,
+                        col: col - b'a',
+                    }
                 }),
-                _ => None
-            }
+                _ => None,
+            };
         }
         None
     }
@@ -69,7 +74,7 @@ impl Piece {
         match self.color {
             Color::White => ch.to_ascii_uppercase(),
             Color::Black => ch,
-        } 
+        }
     }
 
     fn from_char(ch: char) -> Option<Self> {
@@ -85,10 +90,16 @@ impl Piece {
             'r' => PieceType::Rook,
             'q' => PieceType::Queen,
             'k' => PieceType::King,
-            _ => {return None;}
+            _ => {
+                return None;
+            }
         };
 
-        Some(Piece {piece, color, pos: BoardPos::from_idx(0).unwrap()})
+        Some(Piece {
+            piece,
+            color,
+            pos: BoardPos::from_idx(0).unwrap(),
+        })
     }
 
     fn is_move_valid(&self, mve: &Move, board: &ChessBoard) -> bool {
@@ -96,33 +107,45 @@ impl Piece {
         match self.piece {
             PieceType::Pawn => {
                 mve.from.col == mve.to.col // temporary, will fix later
-            },
+            }
             PieceType::Rook => {
                 match (mve.from.row == mve.to.row, mve.from.col == mve.to.col) {
                     (false, false) => false,
                     (true, false) => {
-                        let start: usize = (8 * mve.from.row + std::cmp::min(mve.from.col, mve.to.col)).into();
-                        let end: usize = (8 * mve.from.row + std::cmp::max(mve.from.col, mve.to.col) - 1).into();
-                        println!("start:{start}, end:{end}");
-                        board.pieces.iter()
+                        let start: usize =
+                            (8 * mve.from.row + std::cmp::min(mve.from.col, mve.to.col)).into();
+                        let end: usize =
+                            (8 * mve.from.row + std::cmp::max(mve.from.col, mve.to.col) - 1).into();
+                        board
+                            .pieces
+                            .iter()
                             .skip(start + 1)
                             .take(end - start)
-                            .all(|e| {println!("{:#?}", e); e.is_none()})
+                            .all(|e| {
+                                println!("{:#?}", e);
+                                e.is_none()
+                            })
                     }
                     (false, true) => {
-                        let start: usize = (8 * std::cmp::min(mve.from.row, mve.to.row) + mve.from.col).into();
-                        let end: usize = (8 * std::cmp::max(mve.from.row, mve.to.row) + mve.from.col - 8).into();
-                        println!("start:{start}, end:{end}");
-                        board.pieces.iter()
+                        let start: usize =
+                            (8 * std::cmp::min(mve.from.row, mve.to.row) + mve.from.col).into();
+                        let end: usize =
+                            (8 * std::cmp::max(mve.from.row, mve.to.row) + mve.from.col - 8).into();
+                        board
+                            .pieces
+                            .iter()
                             .skip(start + 8)
                             .take(end - start)
                             .step_by(8)
-                            .all(|e| {println!("{:#?}", e); e.is_none()})
+                            .all(|e| {
+                                println!("{:#?}", e);
+                                e.is_none()
+                            })
                     }
                     (true, true) => panic!("something went wrong"), // this means the rook didnt move/captured itself, (wrong)
                 }
             }
-            _ => panic!("not implemented yet")
+            _ => panic!("not implemented yet"),
         }
     }
 }
@@ -156,14 +179,18 @@ impl Move {
                 return Some(Move { from, to });
             }
             return None;
-        } 
+        }
         None
     }
     fn is_valid(&self, board: &ChessBoard) -> bool {
-        if board.pieces[self.from.to_idx()].is_none() || board.pieces[self.from.to_idx()].unwrap().color != board.turn {
+        if board.pieces[self.from.to_idx()].is_none()
+            || board.pieces[self.from.to_idx()].unwrap().color != board.turn
+        {
             return false;
         }
-        if board.pieces[self.to.to_idx()].is_some() && board.pieces[self.to.to_idx()].unwrap().color == board.turn {
+        if board.pieces[self.to.to_idx()].is_some()
+            && board.pieces[self.to.to_idx()].unwrap().color == board.turn
+        {
             return false;
         }
         let piece = board.pieces[self.from.to_idx()].unwrap();
@@ -174,21 +201,45 @@ impl Move {
 impl ChessBoard {
     fn new() -> Self {
         let mut pieces: Vec<Piece> = Vec::new();
-        let mut board: ChessBoard = ChessBoard {pieces: [NONE_PIECE; 64], turn: Color::White, winner: None};
+        let mut board: ChessBoard = ChessBoard {
+            pieces: [NONE_PIECE; 64],
+            turn: Color::White,
+            winner: None,
+        };
         //add pawns
         for col in 0..8 {
             //add white pawns
-            pieces.push(Piece {color: Color::White, piece: PieceType::Pawn, pos: BoardPos {row: 6, col}});
+            pieces.push(Piece {
+                color: Color::White,
+                piece: PieceType::Pawn,
+                pos: BoardPos { row: 6, col },
+            });
             //add black pawns
-            pieces.push(Piece {color: Color::Black, piece: PieceType::Pawn, pos: BoardPos {row: 1, col}});
+            pieces.push(Piece {
+                color: Color::Black,
+                piece: PieceType::Pawn,
+                pos: BoardPos { row: 1, col },
+            });
         }
 
-        for (col, piece) in "rnbqkbnr".chars().map(|c| Piece::from_char(c).unwrap().piece).enumerate() {
+        for (col, piece) in "rnbqkbnr"
+            .chars()
+            .map(|c| Piece::from_char(c).unwrap().piece)
+            .enumerate()
+        {
             let col = col.try_into().unwrap();
             //add white pawns
-            pieces.push(Piece {color: Color::White, piece, pos: BoardPos {row: 7, col}});
+            pieces.push(Piece {
+                color: Color::White,
+                piece,
+                pos: BoardPos { row: 7, col },
+            });
             //add black pawns
-            pieces.push(Piece {color: Color::Black, piece, pos: BoardPos {row: 0, col}});
+            pieces.push(Piece {
+                color: Color::Black,
+                piece,
+                pos: BoardPos { row: 0, col },
+            });
         }
 
         for piece in pieces {
@@ -198,14 +249,26 @@ impl ChessBoard {
     }
 
     fn print(&self) {
-        println!("{}'s turn", match self.turn { Color::White => "White", Color::Black => "Black" });
+        println!(
+            "{}'s turn",
+            match self.turn {
+                Color::White => "White",
+                Color::Black => "Black",
+            }
+        );
         println!("   a  b  c  d  e  f  g  h");
         for (idx, piece) in self.pieces.iter().enumerate() {
             let pos = BoardPos::from_idx(idx).unwrap();
             if pos.col == 0 {
                 print!("{} ", row_to_display(pos.row));
             }
-            print!("[{}]", match piece {Some(p) => p.to_char(), None => ' '});
+            print!(
+                "[{}]",
+                match piece {
+                    Some(p) => p.to_char(),
+                    None => ' ',
+                }
+            );
             if pos.col == 7 {
                 println!(" {}", row_to_display(pos.row));
             }
@@ -222,18 +285,17 @@ impl ChessBoard {
             self.pieces[from_idx] = None;
             self.turn = match self.turn {
                 Color::White => Color::Black,
-                Color::Black => Color::White
+                Color::Black => Color::White,
             };
             true
         } else {
-            println!("move not valid, wrong color piece (or no piece)");
             false
         }
     }
 }
 
 fn main() {
-    let mut board = ChessBoard::new(); 
+    let mut board = ChessBoard::new();
     let mut input = String::new();
     while board.winner.is_none() {
         board.print();
@@ -242,12 +304,17 @@ fn main() {
         input = input.as_str().trim().to_string();
         let player_move: Move = match Move::parse(&input) {
             Some(m) => m,
-            None => { println!("invalid move format. example: e2e4"); continue; }
+            None => {
+                println!("invalid move format. example: e2e4");
+                continue;
+            }
         };
         let result = board.execute(&player_move);
         if !result {
             println!("move is invalid. please read chess rules first, or make sure the positions are correct");
-            println!("right now maybe its actually valid, most pieces are unimplemented as of right now");
+            println!(
+                "right now maybe its actually valid, most pieces are unimplemented as of right now"
+            );
         }
     }
 }
