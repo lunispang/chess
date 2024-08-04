@@ -145,6 +145,24 @@ impl Piece {
                     (true, true) => panic!("something went wrong"), // this means the rook didnt move/captured itself, (wrong)
                 }
             }
+            PieceType::Bishop => {
+                let col_offset = mve.from.col as i8 - mve.to.col as i8;
+                let row_offset = mve.from.row as i8 - mve.to.row as i8;
+                if (col_offset.abs() - row_offset.abs()) != 0 {
+                    return false;
+                }
+
+                let sign = col_offset.signum() * row_offset.signum();
+                assert!(sign != 0, "both column and row offset must be non-zero");
+                let step = (sign + 8) as usize;
+
+                let start: usize =
+                    (8 * std::cmp::min(mve.from.row, mve.to.row) + mve.from.col).into();
+                let end: usize =
+                    (8 * std::cmp::max(mve.from.row, mve.to.row) + mve.from.col - 8).into();
+
+                board.pieces.iter().skip(start + step).take(end - start).step_by(step).all(|e| {println!("{:#?}", e); e.is_none()})
+            }
             _ => panic!("not implemented yet"),
         }
     }
