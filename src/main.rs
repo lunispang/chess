@@ -103,7 +103,6 @@ impl Piece {
     }
 
     fn is_move_valid(&self, mve: &Move, board: &ChessBoard) -> bool {
-        println!("move: {:#?}", mve);
         match self.piece {
             PieceType::Pawn => {
                 mve.from.col == mve.to.col // temporary, will fix later
@@ -156,12 +155,23 @@ impl Piece {
                 assert!(sign != 0, "both column and row offset must be non-zero");
                 let step = (sign + 8) as usize;
 
-                let start: usize =
-                    (8 * std::cmp::min(mve.from.row, mve.to.row) + mve.from.col).into();
-                let end: usize =
-                    (8 * std::cmp::max(mve.from.row, mve.to.row) + mve.from.col - 8).into();
+                let start: usize = (8 * std::cmp::min(mve.from.row, mve.to.row)
+                    + std::cmp::min(mve.from.col, mve.to.col))
+                .into();
+                let end: usize = (8 * std::cmp::max(mve.from.row, mve.to.row)
+                    + std::cmp::max(mve.from.row, mve.to.row))
+                .into();
 
-                board.pieces.iter().skip(start + step).take(end - start).step_by(step).all(|e| {println!("{:#?}", e); e.is_none()})
+                board
+                    .pieces
+                    .iter()
+                    .skip(start)
+                    .take(end - start - step)
+                    .step_by(step)
+                    .all(|e| {
+                        println!("{:#?}", e);
+                        e.is_none()
+                    })
             }
             _ => panic!("not implemented yet"),
         }
