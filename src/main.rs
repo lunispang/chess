@@ -179,6 +179,15 @@ impl Piece {
                         e.is_none()
                     })
             }
+            PieceType::Knight => {
+                let mut diff = vec![
+                    (mve.from.row as i8 - mve.to.row as i8).abs(),
+                    (mve.from.col as i8 - mve.to.col as i8).abs(),
+                ];
+                println!("{:#?}", diff);
+                diff.sort();
+                diff == vec![1, 2]
+            }
             _ => panic!("not implemented yet"),
         }
     }
