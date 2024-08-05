@@ -390,10 +390,7 @@ fn main() {
         };
         let result = board.execute(&player_move);
         if !result {
-            println!("move is invalid. please read chess rules first, or make sure the positions are correct");
-            println!(
-                "right now maybe its actually valid, most pieces are unimplemented as of right now"
-            );
+            println!("move is invalid");
         }
     }
 }
