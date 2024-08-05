@@ -112,11 +112,15 @@ impl Piece {
 
                 match self.color {
                     Color::White => {
-                        if mve.from.row <= mve.to.row {return false;}
-                    },
+                        if mve.from.row <= mve.to.row {
+                            return false;
+                        }
+                    }
                     Color::Black => {
-                        if mve.from.row >= mve.to.row {return false;}
-                    },
+                        if mve.from.row >= mve.to.row {
+                            return false;
+                        }
+                    }
                 };
 
                 let max_len = if mve.from.row == home_row { 2 } else { 1 };
@@ -144,13 +148,10 @@ impl Piece {
                     return board
                         .pieces
                         .iter()
-                        .skip(start)
+                        .skip(start + if self.color == Color::Black { 8 } else { 0 })
                         .step_by(8)
                         .take(actual_len.into())
-                        .all(|e| {
-                            println!("{:#?}", e);
-                            e.is_none()
-                        });
+                        .all(Option::is_none);
                 }
                 return true;
             }
@@ -167,10 +168,7 @@ impl Piece {
                             .iter()
                             .skip(start + 1)
                             .take(end - start)
-                            .all(|e| {
-                                println!("{:#?}", e);
-                                e.is_none()
-                            })
+                            .all(Option::is_none)
                     }
                     (false, true) => {
                         let start: usize =
@@ -183,10 +181,7 @@ impl Piece {
                             .skip(start + 8)
                             .take(end - start)
                             .step_by(8)
-                            .all(|e| {
-                                println!("{:#?}", e);
-                                e.is_none()
-                            })
+                            .all(Option::is_none)
                     }
                     (true, true) => panic!("something went wrong"), // this means the rook didnt move/captured itself, (wrong)
                 }
@@ -213,25 +208,19 @@ impl Piece {
 
                 let down_skip = if mve.from.row < mve.to.row { step } else { 0 };
 
-                println!("{}, {}, {}, {}", step, start, end, down_skip);
-
                 board
                     .pieces
                     .iter()
                     .skip(start + down_skip + step)
                     .take(end - start - step)
                     .step_by(step)
-                    .all(|e| {
-                        println!("{:#?}", e);
-                        e.is_none()
-                    })
+                    .all(Option::is_none)
             }
             PieceType::Knight => {
                 let mut diff = vec![
                     (mve.from.row as i8 - mve.to.row as i8).abs(),
                     (mve.from.col as i8 - mve.to.col as i8).abs(),
                 ];
-                println!("{:#?}", diff);
                 diff.sort();
                 diff == vec![1, 2]
             }
