@@ -110,6 +110,15 @@ impl Piece {
                     Color::Black => 1,
                 };
 
+                match self.color {
+                    Color::White => {
+                        if mve.from.row <= mve.to.row {return false;}
+                    },
+                    Color::Black => {
+                        if mve.from.row >= mve.to.row {return false;}
+                    },
+                };
+
                 let max_len = if mve.from.row == home_row { 2 } else { 1 };
 
                 let actual_len = (mve.from.row as i8 - mve.to.row as i8).unsigned_abs();
@@ -129,8 +138,19 @@ impl Piece {
                     {
                         return false;
                     }
-                } else if attacked.is_some() {
-                    return false;
+                } else {
+                    let start: usize =
+                        (8 * std::cmp::min(mve.from.row, mve.to.row) + mve.from.col) as usize;
+                    return board
+                        .pieces
+                        .iter()
+                        .skip(start)
+                        .step_by(8)
+                        .take(actual_len.into())
+                        .all(|e| {
+                            println!("{:#?}", e);
+                            e.is_none()
+                        });
                 }
                 return true;
             }
