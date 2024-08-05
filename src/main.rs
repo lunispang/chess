@@ -155,17 +155,23 @@ impl Piece {
                 assert!(sign != 0, "both column and row offset must be non-zero");
                 let step = (sign + 8) as usize;
 
-                let start: usize = (8 * std::cmp::min(mve.from.row, mve.to.row)
-                    + std::cmp::min(mve.from.col, mve.to.col))
+                let is_max = mve.from.row < mve.to.row;
+
+                let start: usize = (8 * if is_max { mve.from.row } else { mve.to.row }
+                    + if is_max { mve.from.col } else { mve.to.col })
                 .into();
-                let end: usize = (8 * std::cmp::max(mve.from.row, mve.to.row)
-                    + std::cmp::max(mve.from.row, mve.to.row))
+                let end: usize = (8 * if !is_max { mve.from.row } else { mve.to.row }
+                    + if !is_max { mve.from.col } else { mve.to.col })
                 .into();
+
+                let down_skip = if mve.from.row < mve.to.row { step } else { 0 };
+
+                println!("{}, {}, {}, {}", step, start, end, down_skip);
 
                 board
                     .pieces
                     .iter()
-                    .skip(start)
+                    .skip(start + down_skip + step)
                     .take(end - start - step)
                     .step_by(step)
                     .all(|e| {
