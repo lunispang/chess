@@ -105,7 +105,34 @@ impl Piece {
     fn is_move_valid(&self, mve: &Move, board: &ChessBoard) -> bool {
         match self.piece {
             PieceType::Pawn => {
-                mve.from.col == mve.to.col // temporary, will fix later
+                let home_row: u8 = match self.color {
+                    Color::White => 6,
+                    Color::Black => 1,
+                };
+
+                let max_len = if mve.from.row == home_row { 2 } else { 1 };
+
+                let actual_len = (mve.from.row as i8 - mve.to.row as i8).unsigned_abs();
+
+                if actual_len > max_len {
+                    return false;
+                }
+
+                let attacked: Option<Piece> = board.pieces[(mve.to.row * 8 + mve.to.col) as usize];
+
+                if mve.from.col != mve.to.col {
+                    let col_diff: u8 = (mve.from.col as i8 - mve.to.col as i8).unsigned_abs();
+                    if actual_len != 1
+                        || col_diff != 1
+                        || attacked.is_none()
+                        || attacked.unwrap().color == self.color
+                    {
+                        return false;
+                    }
+                } else if attacked.is_some() {
+                    return false;
+                }
+                return true;
             }
             PieceType::Rook => {
                 match (mve.from.row == mve.to.row, mve.from.col == mve.to.col) {
