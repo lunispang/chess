@@ -197,14 +197,8 @@ impl Piece {
                 assert!(sign != 0, "both column and row offset must be non-zero");
                 let step = (sign + 8) as usize;
 
-                let is_max = mve.from.row < mve.to.row;
-
-                let start: usize = (8 * if is_max { mve.from.row } else { mve.to.row }
-                    + if is_max { mve.from.col } else { mve.to.col })
-                .into();
-                let end: usize = (8 * if !is_max { mve.from.row } else { mve.to.row }
-                    + if !is_max { mve.from.col } else { mve.to.col })
-                .into();
+                let start: usize = std::cmp::min(mve.from.to_idx(), mve.to.to_idx());
+                let end: usize = std::cmp::max(mve.from.to_idx(), mve.to.to_idx());
 
                 let down_skip = if mve.from.row < mve.to.row { step } else { 0 };
 
@@ -225,7 +219,26 @@ impl Piece {
                 diff == vec![1, 2]
             }
             PieceType::Queen => {
-                true
+                let col_offset = mve.from.col as i8 - mve.to.col as i8;
+                let row_offset = mve.from.row as i8 - mve.to.row as i8;
+
+                let straight = col_offset == 0 || row_offset == 0;
+                let diagonal = col_offset.abs() == row_offset.abs();
+                if !(straight || diagonal) {
+                    return false;
+                }
+
+                let start = std::cmp::min(mve.from.to_idx(), mve.to.to_idx());
+                let end = std::cmp::max(mve.from.to_idx(), mve.to.to_idx());
+
+                let step: usize = if straight {
+                    if col_offset == 0 { 8 } else { 1 }     
+                } else {
+                    let sign = col_offset.signum() * row_offset.signum(); 
+                    8 + sign as usize
+                };
+
+                board.pieces.iter().skip(start).take(end - start - step).step_by(step).all(Option::is_none)
             }
             _ => panic!("not implemented yet"),
         }
