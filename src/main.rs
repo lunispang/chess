@@ -240,7 +240,12 @@ impl Piece {
 
                 board.pieces.iter().skip(start + step).take(end - start - step).step_by(step).all(|e| {println!("{:#?}", e); e.is_none()})
             }
-            _ => panic!("not implemented yet"),
+            PieceType::King => {
+                let col_offset = mve.from.col as i8 - mve.to.col as i8;
+                let row_offset = mve.from.row as i8 - mve.to.row as i8;
+
+                col_offset.abs() <= 1 && row_offset.abs() <= 1
+            }
         }
     }
 }
