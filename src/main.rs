@@ -235,10 +235,10 @@ impl Piece {
                     if col_offset == 0 { 8 } else { 1 }     
                 } else {
                     let sign = col_offset.signum() * row_offset.signum(); 
-                    8 + sign as usize
+                    (8 + sign) as usize
                 };
 
-                board.pieces.iter().skip(start).take(end - start - step).step_by(step).all(Option::is_none)
+                board.pieces.iter().skip(start + step).take(end - start - step).step_by(step).all(|e| {println!("{:#?}", e); e.is_none()})
             }
             _ => panic!("not implemented yet"),
         }
