@@ -2,6 +2,7 @@
 name = "chess"
 version = "0.1.0"
 edition = "2021"
-author = "lunispang"
+authors = ["lunispang"]
+description = "chess. bots are to be added."
 
 [dependencies]

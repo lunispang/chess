@@ -224,6 +224,9 @@ impl Piece {
                 diff.sort();
                 diff == vec![1, 2]
             }
+            PieceType::Queen => {
+                true
+            }
             _ => panic!("not implemented yet"),
         }
     }
