@@ -153,7 +153,7 @@ impl Piece {
                         .take(actual_len.into())
                         .all(Option::is_none);
                 }
-                return true;
+                true
             }
             PieceType::Rook => {
                 match (mve.from.row == mve.to.row, mve.from.col == mve.to.col) {
